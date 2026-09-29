@@ -1,11 +1,13 @@
 package com.udea.lab2p2026;
-import com.github.javafaker.Faker;
+import java.util.Locale;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.github.javafaker.Faker;
+
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
-import java.util.Locale;
 
 @RestController
 public class DataController {
