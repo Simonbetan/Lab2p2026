@@ -48,10 +48,9 @@ jobs:
 
       - name: Setup Java 17
         uses: actions/setup-java@v5
-
         with:
           distribution: temurin
-          ava-version: '17'
+          java-version: '17'
           cache: maven
 
       - name: Java version
