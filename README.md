@@ -1,7 +1,7 @@
 [![CI/CD Pipeline](https://github.com/Simonbetan/Lab2p2026/actions/workflows/build.yml/badge.svg)](https://github.com/Simonbetan/Lab2p2026/actions/workflows/build.yml)
 [![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=Simonbetan_Lab2p2026&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Simonbetan_Lab2p2026)
-[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=Simonbetan_Lab2p2026)](https://sonarcloud.io/summary/new_code?id=Simonbetan_Lab2p2026)
-[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-highlight.svg)](https://sonarcloud.io/summary/new_code?id=Simonbetan_Lab2p2026)
+
+
 
 # Lab2p2026
 
