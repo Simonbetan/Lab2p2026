@@ -3,10 +3,12 @@ name: CI/CD Pipeline
 on:
   #Manually trigger workflow runs
   workflow_dispatch:
-  #Trigger the workflow on push from the main branch
+  #Trigger the workflow on push from the main branch (trunk) and from the
+  #short-lived branches of the trunk based strategy (feature/deploy-render, ...)
   push:
     branches:
       - main
+      - 'feature/**'
 jobs:
   #Test's job
   tests:
@@ -33,6 +35,15 @@ jobs:
       #Run Tests
       - name: Run Tests
         run: mvn -B test
+      #Upload the JaCoCo coverage report to Coveralls
+      #(fail-on-error: false keeps the pipeline green if Coveralls is not enabled)
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          file: target/site/jacoco/jacoco.xml
+          format: jacoco
+          base-path: src/main/java
+          fail-on-error: false
 
   #Sonar's Job
   sonar:
@@ -74,3 +85,88 @@ jobs:
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.token=$SONAR_TOKEN
 
+  #Build's job
+  build:
+    #Depends on sonar's job
+    needs: sonar
+    name: Build
+    #Run on Ubuntu using the latest version
+    runs-on: ubuntu-latest
+    steps:
+      #Check-out your repository under $GITHUB_WORKSPACE, so your workflow can access it
+      - uses: actions/checkout@v4
+      #Set up JDK 17 (with Maven cache)
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      #Build the application using Maven
+      - name: Build with Maven
+        run: mvn -B package -DskipTests --file pom.xml
+      #Upload the JAR
+      - name: Upload JAR
+        #This uploads artifacts from your workflow allowing you to share data between jobs and store data once a workflow is complete.
+        uses: actions/upload-artifact@v4
+        with:
+          #Set artifact name
+          name: artifact
+          #From this path
+          path: target/lab2p2026.jar
+
+  #Deploy's job
+  deploy:
+    #Depends on build's job
+    needs: build
+    name: Deploy to Render
+    #Trunk based: only the main branch is deployed,
+    #the feature branches only run tests, sonar and build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.RENDER_APP_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      #Download the JAR built in the build's job into target/
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact
+          path: target
+      #Build the image with the JAR and push it to Docker Hub
+      - name: Build & push Docker image
+        uses: mr-smithers-excellent/docker-build-push@v6
+        with:
+          image: ${{ secrets.DOCKER_USERNAME }}/lab2p2026
+          tags: latest, ${{ github.sha }}
+          registry: docker.io
+          dockerfile: Dockerfile
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      #Render pulls the new latest image and redeploys the container
+      - name: Trigger deploy on Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+      #Call the backend endpoints on the cloud until the service answers
+      - name: Smoke test on Render
+        env:
+          APP_URL: ${{ vars.RENDER_APP_URL }}
+        run: |
+          sleep 60
+          for i in $(seq 1 30); do
+            if curl -fsS "$APP_URL/"; then
+              echo
+              for path in /version /nations /currencies /aviation; do
+                echo "GET $APP_URL$path"
+                curl -fsS "$APP_URL$path"
+                echo
+              done
+              exit 0
+            fi
+            echo "Waiting for $APP_URL ($i/30)"
+            sleep 10
+          done
+          exit 1

@@ -1,0 +1,10 @@
+#Only the JAR artifact is needed to build the image
+.git
+.github
+.mvn
+.vscode
+.idea
+src
+*.md
+target/*
+!target/lab2p2026.jar
