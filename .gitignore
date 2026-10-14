@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Office temp files and deliverable ###
+~$*
+Entregable_Lab2_CICD.docx
