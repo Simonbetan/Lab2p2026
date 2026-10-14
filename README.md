@@ -54,3 +54,16 @@ Implementation of a Simple App with the next operations:
   ```shell
   $ mvwn -B package -DskipTests --file pom.xml
   ```
+
+  ### Deployment
+
+  The pipeline deploys the `main` branch on Render as a Docker container:
+
+  * Docker image: [simonbeta/lab2p2026](https://hub.docker.com/r/simonbeta/lab2p2026)
+  * Backend URL: https://lab2p2026.onrender.com
+
+  Run the image locally:
+
+  ```shell
+  $ docker run -p 8080:8080 simonbeta/lab2p2026:latest
+  ```
